@@ -1,0 +1,22 @@
+{
+  "name": "playwright-typescript-automation",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Heba-art/playwright-typescript-automation.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Heba-art/playwright-typescript-automation/issues"
+  },
+  "homepage": "https://github.com/Heba-art/playwright-typescript-automation#readme",
+  "description": "",
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.2.0"
+  }
+}
