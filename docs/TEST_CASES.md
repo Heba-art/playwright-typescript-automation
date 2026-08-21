@@ -7,7 +7,7 @@
 
 | ID | Module | Title | Priority | Type | Precondition | Steps | Expected Result | Actual Result |
 |---|---|---|---|---|---|---|---|---|
-| TC-UI-001 | Registration | Register New User | High | Positive | User email is not registered | 1. Open the application<br>2. Select Signup/Login<br>3. Enter name and email<br>4. Complete registration form<br>5. Submit the account | Account is created and confirmation is displayed | ⬜ Not Executed |
+| TC-UI-001 | Registration | Register New User | High | Positive | User email is not registered | 1. Open the application<br>2. Select Signup/Login<br>3. Enter a unique name and email<br>4. Select Signup<br>5. Complete the registration form<br>6. Select Create Account<br>7. Verify `ACCOUNT CREATED!`<br>8. Select Continue<br>9. Verify `Logged in as Heba QA`<br>10. Select Delete Account<br>11. Verify `ACCOUNT DELETED!`<br>12. Select Continue | Account is created successfully, the user is logged in, and the test account is deleted during cleanup | ✅ Pass |
 | TC-UI-002 | Authentication | Login with Correct Credentials | Critical | Positive | Registered user exists | 1. Open Signup/Login<br>2. Enter valid email<br>3. Enter valid password<br>4. Select Login | User is logged in and username is displayed | ⬜ Not Executed |
 | TC-UI-003 | Authentication | Login with Incorrect Credentials | High | Negative | Login page is available | 1. Open Signup/Login<br>2. Enter invalid credentials<br>3. Select Login | Incorrect credentials error is displayed | ⬜ Not Executed |
 | TC-UI-004 | Authentication | Logout User | High | Positive | User is logged in | 1. Select Logout<br>2. Review the destination page | User session ends and Login page is displayed | ⬜ Not Executed |
