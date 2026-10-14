@@ -19,11 +19,21 @@ constructor(page: Page) {
 loggedInAs (name: string): Locator{
 return this.page.getByText(`Logged in as ${name}`,{ exact: true },);
 }
+
 async continueToHome(){
     await this.continueLink.click();
 }
+
 async deleteAccount() {
     await this.deleteAccountLink.click();
 }
 
+async logout() {
+  await this.page.getByRole('link', {
+    name: 'Logout',
+  }).click();
 }
+
+}
+
+
