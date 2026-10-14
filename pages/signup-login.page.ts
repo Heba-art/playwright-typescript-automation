@@ -1,11 +1,16 @@
-import {Page} from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class SignupLoginPage{
 
 page: Page;
+loginErrorMessage: Locator;
 
 constructor(page: Page){
-   this.page=page 
+   this.page=page
+   this.loginErrorMessage = page.getByText(
+  'Your email or password is incorrect!',
+  { exact: true },
+); 
 }
 
 async open(){

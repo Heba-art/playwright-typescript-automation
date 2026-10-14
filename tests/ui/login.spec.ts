@@ -57,7 +57,24 @@ await signupLoginPage.startRegistration(
   await accountStatusPage.deleteAccount();
 
   await expect(accountStatusPage.accountDeletedMessage,).toBeVisible();
-  
+
   await accountStatusPage.continueToHome();
 },
 );
+
+test('TC-UI-003: Login with incorrect email and password', async ({ page }) => {
+const signupLoginPage = new SignupLoginPage(page);
+const invalidEmail = `not-registered-${Date.now()}@example.com`;
+const incorrectPassword = 'WrongPassword123!';
+
+ await signupLoginPage.open();
+
+   await expect(
+    page.getByText('Login to your account', { exact: true }),
+  ).toBeVisible()
+
+await signupLoginPage.login(invalidEmail, incorrectPassword);
+
+await expect(signupLoginPage.loginErrorMessage).toBeVisible();
+
+});
