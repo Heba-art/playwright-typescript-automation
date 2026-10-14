@@ -78,3 +78,41 @@ await signupLoginPage.login(invalidEmail, incorrectPassword);
 await expect(signupLoginPage.loginErrorMessage).toBeVisible();
 
 });
+
+test('TC-UI-004: Logout user', async ({ page }) => {
+
+const user = createRegistrationUser();
+const signupLoginPage = new SignupLoginPage(page);
+const registrationPage = new RegistrationPage(page);
+const accountStatusPage = new AccountStatusPage(page);
+
+// Create a new test account; registration logs the user in automatically
+  await signupLoginPage.open();
+  await signupLoginPage.startRegistration(user.name, user.email);
+  await registrationPage.completeRegistration(user);
+  await expect(accountStatusPage.accountCreatedMessage).toBeVisible();
+  await accountStatusPage.continueToHome();
+  await expect(accountStatusPage.loggedInAs(user.name)).toBeVisible();
+
+ // Log out from the registration session so we can test login with these credentials
+  await accountStatusPage.logout();
+  
+await signupLoginPage.open();
+  await expect(signupLoginPage.loginHeading).toBeVisible();
+  await signupLoginPage.login(user.email, user.password);
+  await expect(accountStatusPage.loggedInAs(user.name)).toBeVisible();
+
+  // TC4: Log out and verify that the login page is displayed
+  await accountStatusPage.logout();
+  await expect(signupLoginPage.loginHeading).toBeVisible({
+    timeout: 10_000,
+  });
+  await expect(page).toHaveURL(/login/);
+
+  // Delete the test account after verification
+  await signupLoginPage.login(user.email, user.password);
+  await accountStatusPage.deleteAccount();
+  await expect(accountStatusPage.accountDeletedMessage).toBeVisible();
+  await accountStatusPage.continueToHome();
+
+});

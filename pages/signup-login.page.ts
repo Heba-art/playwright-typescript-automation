@@ -4,6 +4,7 @@ export class SignupLoginPage{
 
 page: Page;
 loginErrorMessage: Locator;
+loginHeading: Locator;
 
 constructor(page: Page){
    this.page=page
@@ -11,6 +12,10 @@ constructor(page: Page){
   'Your email or password is incorrect!',
   { exact: true },
 ); 
+this.loginHeading = page.getByText(
+  'Login to your account',
+  { exact: true },
+);
 }
 
 async open(){
