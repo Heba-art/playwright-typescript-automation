@@ -20,4 +20,12 @@ async startRegistration(name: string, email: string){
     await signupForm.getByRole('button', { name: 'Signup' }).click();
 }
 
+async login (email:string, password: string){
+const loginForm = this.page.locator('form').filter({hasText: 'Login'});
+await loginForm.getByPlaceholder('Email Address').fill(email);
+await loginForm.getByPlaceholder('Password').fill(password);
+await loginForm.getByRole('button', {name: 'Login',
+      exact: true,
+    }).click();
+}
 }
