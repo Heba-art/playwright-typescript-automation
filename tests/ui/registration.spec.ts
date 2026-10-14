@@ -1,111 +1,49 @@
-import {test,expect} from '@playwright/test';
+import { test, expect } from '../../fixtures/test-fixtures';
 
-import {SignupLoginPage} from '../../pages/signup-login.page';
-import {AccountStatusPage} from '../../pages/account-status.page';
-import {RegistrationPage} from '../../pages/registration.page';
-import { createRegistrationUser } from '../../test-data/user-data';
+import { SignupLoginPage } from '../../pages/signup-login.page';
+import { AccountStatusPage } from '../../pages/account-status.page';
+import { RegistrationPage } from '../../pages/registration.page';
 
-test('TC-UI-001: Register new user', async ({ page }) => {
+test('TC-UI-001: Register new user', async ({ page, newUser }) => {
   test.setTimeout(60_000);
 
-const user = createRegistrationUser();
-
-const signupLoginPage = new SignupLoginPage(page);
-const registrationPage = new RegistrationPage (page);
-const accountStatusPage = new AccountStatusPage(page);
- 
-await signupLoginPage.open();
-
- await expect(page.getByRole('heading', {
-        name: 'New User Signup!',
-      }),
-).toBeVisible();
-
-await signupLoginPage.startRegistration(
-    user.name,
-    user.email,
-);
-
-await expect(page.getByText(
-        'Enter Account Information',
-        { exact: true },
-      ),
-    ).toBeVisible()
-
-await registrationPage.completeRegistration(user);
-
-await  expect (accountStatusPage.accountCreatedMessage,
-    ).toBeVisible();
-
-await  accountStatusPage.continueToHome();
-
-await expect(accountStatusPage.loggedInAs(user.name),
-    ).toBeVisible();
-
-await accountStatusPage.deleteAccount();
-await expect(accountStatusPage.accountDeletedMessage,
-    ).toBeVisible();
-
-await accountStatusPage.continueToHome();
-
-await expect(page).toHaveURL(
-    'https://automationexercise.com/',
-    );
-  },
-);
-
-test('TC-UI-005: Register user with existing email', async ({ page, browser, request }) => {
-  test.setTimeout(60_000);
-
-  const user = createRegistrationUser();
   const signupLoginPage = new SignupLoginPage(page);
   const registrationPage = new RegistrationPage(page);
   const accountStatusPage = new AccountStatusPage(page);
 
-  // Create the account in the original session.
   await signupLoginPage.open();
-  await signupLoginPage.startRegistration(user.name, user.email);
-  await registrationPage.completeRegistration(user);
+  await expect(signupLoginPage.newUserSignupHeading).toBeVisible();
+
+  await signupLoginPage.startRegistration(newUser.name, newUser.email);
+  await expect(page.getByText('Enter Account Information', { exact: true })).toBeVisible();
+
+  await registrationPage.completeRegistration(newUser);
   await expect(accountStatusPage.accountCreatedMessage).toBeVisible();
+
   await accountStatusPage.continueToHome();
-  await expect(accountStatusPage.loggedInAs(user.name)).toBeVisible();
+  await expect(accountStatusPage.loggedInAs(newUser.name)).toBeVisible();
 
-  // Try the same email in a separate, signed-out session.
-  const guestContext = await browser.newContext({
-    baseURL: 'https://automationexercise.com',
-  });
+  // Deleting through the UI is part of this test case (steps 10–12).
+  // If the test fails before this point, the fixture deletes the account through the API.
+  await accountStatusPage.deleteAccount();
+  await expect(accountStatusPage.accountDeletedMessage).toBeVisible();
 
-  try {
-    const guestPage = await guestContext.newPage();
-    const guestSignupPage = new SignupLoginPage(guestPage);
+  await accountStatusPage.continueToHome();
+  await expect(page).toHaveURL('https://automationexercise.com/');
+});
 
-    await guestSignupPage.open();
-    await expect(
-      guestPage.getByRole('heading', {
-        name: 'New User Signup!',
-        exact: true,
-      }),
-    ).toBeVisible();
+test('TC-UI-005: Register user with existing email', async ({ page, registeredUser }) => {
+  test.setTimeout(60_000);
 
-    await guestSignupPage.startRegistration(user.name, user.email);
-    await expect(
-      guestPage.getByText('Email Address already exist!', { exact: true }),
-    ).toBeVisible();
-  } finally {
-    await guestContext.close();
-  }
+  const signupLoginPage = new SignupLoginPage(page);
 
-  // Delete the account from the original session.
-  const cleanupResponse = await request.delete(
-  'https://automationexercise.com/api/deleteAccount',
-  {
-    form: {
-      email: user.email,
-      password: user.password,
-    },
-  },
-);
+  // Precondition (email already registered) is created through the API by the fixture,
+  // so this page is signed out and no second browser context is needed.
+  await signupLoginPage.open();
+  await expect(signupLoginPage.newUserSignupHeading).toBeVisible();
 
-expect(cleanupResponse.ok()).toBeTruthy();
-expect((await cleanupResponse.json()).responseCode).toBe(200);
+  await signupLoginPage.startRegistration(registeredUser.name, registeredUser.email);
+
+  await expect(signupLoginPage.existingEmailErrorMessage).toBeVisible();
+  // Cleanup: the fixture deletes the account through the API.
 });
