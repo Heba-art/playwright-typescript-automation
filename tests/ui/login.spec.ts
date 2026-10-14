@@ -1,118 +1,54 @@
-import {test, expect} from '@playwright/test';
+import { test, expect } from '../../fixtures/test-fixtures';
 
 import { SignupLoginPage } from '../../pages/signup-login.page';
-import { RegistrationPage } from '../../pages/registration.page';
 import { AccountStatusPage } from '../../pages/account-status.page';
-import { createRegistrationUser } from '../../test-data/user-data';
 
-test('TC-UI-002: Login with correct credentials',async ({page}) => {
-test.setTimeout(60_000);
+test('TC-UI-002: Login with correct credentials', async ({ page, registeredUser }) => {
+  test.setTimeout(60_000);
 
-const user = createRegistrationUser();
+  const signupLoginPage = new SignupLoginPage(page);
+  const accountStatusPage = new AccountStatusPage(page);
 
-const signupLoginPage = new SignupLoginPage(page);
-const registrationPage = new RegistrationPage(page);
-const accountStatusPage = new AccountStatusPage(page);
+  // Precondition (registered user exists) is created through the API by the fixture.
+  await signupLoginPage.open();
+  await expect(signupLoginPage.loginHeading).toBeVisible();
 
-// Setup: create an account for this test.
-await signupLoginPage.open();
+  await signupLoginPage.login(registeredUser.email, registeredUser.password);
 
-await signupLoginPage.startRegistration(
-    user.name,
-    user.email,
-);
- await registrationPage.completeRegistration(user);
-
- await expect(accountStatusPage.accountCreatedMessage,).toBeVisible();
-
- await accountStatusPage.continueToHome();
-
- await expect(accountStatusPage.loggedInAs(user.name),).toBeVisible();
-
-  // Log out before testing login.
- await accountStatusPage.logout();
-
- await expect(
-    page.getByRole('heading', {
-      name: 'Login to your account',
-      exact: true,
-    }),
-  ).toBeVisible();
-
-   await expect(
-    accountStatusPage.loggedInAs(user.name),
-  ).toBeHidden();
-
-  // Test: log in with the registered credentials.
-
-  await signupLoginPage.login(
-    user.email,
-    user.password,
-  );
-
-  await expect (accountStatusPage.loggedInAs(user.name),).toBeVisible();
-
-  // Cleanup: delete the test account.
-
-  await accountStatusPage.deleteAccount();
-
-  await expect(accountStatusPage.accountDeletedMessage,).toBeVisible();
-
-  await accountStatusPage.continueToHome();
-},
-);
-
-test('TC-UI-003: Login with incorrect email and password', async ({ page }) => {
-const signupLoginPage = new SignupLoginPage(page);
-const invalidEmail = `not-registered-${Date.now()}@example.com`;
-const incorrectPassword = 'WrongPassword123!';
-
- await signupLoginPage.open();
-
-   await expect(
-    page.getByText('Login to your account', { exact: true }),
-  ).toBeVisible()
-
-await signupLoginPage.login(invalidEmail, incorrectPassword);
-
-await expect(signupLoginPage.loginErrorMessage).toBeVisible();
-
+  await expect(accountStatusPage.loggedInAs(registeredUser.name)).toBeVisible();
+  // Cleanup: the fixture deletes the account through the API.
 });
 
-test('TC-UI-004: Logout user', async ({ page }) => {
+test('TC-UI-003: Login with incorrect email and password', async ({ page }) => {
+  const signupLoginPage = new SignupLoginPage(page);
+  const invalidEmail = `not-registered-${Date.now()}@example.com`;
+  const incorrectPassword = 'WrongPassword123!';
 
-const user = createRegistrationUser();
-const signupLoginPage = new SignupLoginPage(page);
-const registrationPage = new RegistrationPage(page);
-const accountStatusPage = new AccountStatusPage(page);
-
-// Create a new test account; registration logs the user in automatically
   await signupLoginPage.open();
-  await signupLoginPage.startRegistration(user.name, user.email);
-  await registrationPage.completeRegistration(user);
-  await expect(accountStatusPage.accountCreatedMessage).toBeVisible();
-  await accountStatusPage.continueToHome();
-  await expect(accountStatusPage.loggedInAs(user.name)).toBeVisible();
-
- // Log out from the registration session so we can test login with these credentials
-  await accountStatusPage.logout();
-  
-await signupLoginPage.open();
+  await expect(page).toHaveURL(/\/login/, { timeout: 15_000 });
   await expect(signupLoginPage.loginHeading).toBeVisible();
-  await signupLoginPage.login(user.email, user.password);
-  await expect(accountStatusPage.loggedInAs(user.name)).toBeVisible();
 
-  // TC4: Log out and verify that the login page is displayed
+  await signupLoginPage.login(invalidEmail, incorrectPassword);
+
+  await expect(signupLoginPage.loginErrorMessage).toBeVisible();
+});
+
+test('TC-UI-004: Logout user', async ({ page, registeredUser }) => {
+  test.setTimeout(60_000);
+
+  const signupLoginPage = new SignupLoginPage(page);
+  const accountStatusPage = new AccountStatusPage(page);
+
+  // Precondition: the user is logged in.
+  await signupLoginPage.open();
+  await signupLoginPage.login(registeredUser.email, registeredUser.password);
+  await expect(accountStatusPage.loggedInAs(registeredUser.name)).toBeVisible();
+
+  // Test: log out and confirm the session ended on the login page.
   await accountStatusPage.logout();
-  await expect(signupLoginPage.loginHeading).toBeVisible({
-    timeout: 10_000,
-  });
-  await expect(page).toHaveURL(/login/);
 
-  // Delete the test account after verification
-  await signupLoginPage.login(user.email, user.password);
-  await accountStatusPage.deleteAccount();
-  await expect(accountStatusPage.accountDeletedMessage).toBeVisible();
-  await accountStatusPage.continueToHome();
-
+  await expect(page).toHaveURL(/\/login/);
+  await expect(signupLoginPage.loginHeading).toBeVisible();
+  await expect(accountStatusPage.loggedInAs(registeredUser.name)).toBeHidden();
+  // Cleanup: the fixture deletes the account through the API.
 });

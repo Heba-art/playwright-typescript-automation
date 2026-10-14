@@ -5,6 +5,8 @@ export class SignupLoginPage{
 page: Page;
 loginErrorMessage: Locator;
 loginHeading: Locator;
+newUserSignupHeading: Locator;
+existingEmailErrorMessage: Locator;
 
 constructor(page: Page){
    this.page=page
@@ -16,6 +18,15 @@ this.loginHeading = page.getByText(
   'Login to your account',
   { exact: true },
 );
+this.newUserSignupHeading = page.getByRole('heading', {
+  name: 'New User Signup!',
+  exact: true,
+});
+
+this.existingEmailErrorMessage = page.getByText(
+  'Email Address already exist!',
+  { exact: true },
+);
 }
 
 async open(){
@@ -25,7 +36,7 @@ await this.page.goto('/login', {waitUntil: 'domcontentloaded',});
 async startRegistration(name: string, email: string){
 
     const signupForm = this.page.locator('form').filter({ hasText: 'Signup' });
-    await signupForm.getByRole('textbox', { name: 'Name' }).fill(name);
+    await signupForm.getByPlaceholder('Name', { exact: true }).fill(name);
     await signupForm.getByPlaceholder('Email Address').fill(email);
     await signupForm.getByRole('button', { name: 'Signup' }).click();
 }

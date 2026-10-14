@@ -1,55 +1,49 @@
-import {test,expect} from '@playwright/test';
+import { test, expect } from '../../fixtures/test-fixtures';
 
-import {SignupLoginPage} from '../../pages/signup-login.page';
-import {AccountStatusPage} from '../../pages/account-status.page';
-import {RegistrationPage} from '../../pages/registration.page';
-import { createRegistrationUser } from '../../test-data/user-data';
+import { SignupLoginPage } from '../../pages/signup-login.page';
+import { AccountStatusPage } from '../../pages/account-status.page';
+import { RegistrationPage } from '../../pages/registration.page';
 
-test('TC-UI-001: Register new user', async ({ page }) => {
+test('TC-UI-001: Register new user', async ({ page, newUser }) => {
   test.setTimeout(60_000);
 
-const user = createRegistrationUser();
+  const signupLoginPage = new SignupLoginPage(page);
+  const registrationPage = new RegistrationPage(page);
+  const accountStatusPage = new AccountStatusPage(page);
 
-const signupLoginPage = new SignupLoginPage(page);
-const registrationPage = new RegistrationPage (page);
-const accountStatusPage = new AccountStatusPage(page);
- 
-await signupLoginPage.open();
+  await signupLoginPage.open();
+  await expect(signupLoginPage.newUserSignupHeading).toBeVisible();
 
- await expect(page.getByRole('heading', {
-        name: 'New User Signup!',
-      }),
-).toBeVisible();
+  await signupLoginPage.startRegistration(newUser.name, newUser.email);
+  await expect(page.getByText('Enter Account Information', { exact: true })).toBeVisible();
 
-await signupLoginPage.startRegistration(
-    user.name,
-    user.email,
-);
+  await registrationPage.completeRegistration(newUser);
+  await expect(accountStatusPage.accountCreatedMessage).toBeVisible();
 
-await expect(page.getByText(
-        'Enter Account Information',
-        { exact: true },
-      ),
-    ).toBeVisible()
+  await accountStatusPage.continueToHome();
+  await expect(accountStatusPage.loggedInAs(newUser.name)).toBeVisible();
 
-await registrationPage.completeRegistration(user);
+  // Deleting through the UI is part of this test case (steps 10–12).
+  // If the test fails before this point, the fixture deletes the account through the API.
+  await accountStatusPage.deleteAccount();
+  await expect(accountStatusPage.accountDeletedMessage).toBeVisible();
 
-await  expect (accountStatusPage.accountCreatedMessage,
-    ).toBeVisible();
+  await accountStatusPage.continueToHome();
+  await expect(page).toHaveURL('https://automationexercise.com/');
+});
 
-await  accountStatusPage.continueToHome();
+test('TC-UI-005: Register user with existing email', async ({ page, registeredUser }) => {
+  test.setTimeout(60_000);
 
-await expect(accountStatusPage.loggedInAs(user.name),
-    ).toBeVisible();
+  const signupLoginPage = new SignupLoginPage(page);
 
-await accountStatusPage.deleteAccount();
-await expect(accountStatusPage.accountDeletedMessage,
-    ).toBeVisible();
+  // Precondition (email already registered) is created through the API by the fixture,
+  // so this page is signed out and no second browser context is needed.
+  await signupLoginPage.open();
+  await expect(signupLoginPage.newUserSignupHeading).toBeVisible();
 
-await accountStatusPage.continueToHome();
+  await signupLoginPage.startRegistration(registeredUser.name, registeredUser.email);
 
-await expect(page).toHaveURL(
-    'https://automationexercise.com/',
-    );
-  },
-);
+  await expect(signupLoginPage.existingEmailErrorMessage).toBeVisible();
+  // Cleanup: the fixture deletes the account through the API.
+});
